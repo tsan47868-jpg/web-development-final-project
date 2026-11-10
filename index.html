@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A personal budget dashboard for tracking your spending and savings.">
+    <title>SpendWise | Monthly overview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <div class="sidebar-header">
+          <a class="brand" href="#overview">
+            <span class="brand-mark">S</span>
+            <span>SpendWise</span>
+          </a>
+          <button
+            class="menu-toggle"
+            id="menuToggle"
+            type="button"
+            aria-label="Open navigation menu"
+            aria-expanded="false"
+            aria-controls="primaryMenu"
+          >
+            <span class="menu-toggle-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span>Menu</span>
+          </button>
+        </div>
+        <nav class="sidebar-nav" id="primaryMenu">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link active" href="#overview">◈ <span>Overview</span></a>
+          <a class="nav-link" href="#categories">▦ <span>Categories</span></a>
+          <a class="nav-link" href="#activity">↗ <span>Activity</span></a>
+          <a class="nav-link" href="#goals">◎ <span>Goals</span></a>
+        </nav>
+        <div class="sidebar-footer">
+          <div class="help-card">
+            <span class="help-icon">?</span>
+            <div>
+              <strong>Need a hand?</strong>
+              <span>Your data stays in this browser</span>
+            </div>
+          </div>
+          <div class="user-profile">
+            <span class="avatar" aria-hidden="true">S</span>
+            <span class="user-copy">
+              <strong>Personal budget</strong>
+              <small>Saved on this device</small>
+            </span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content" id="overview">
+        <header class="page-header">
+          <div>
+            <p class="eyebrow">Interactive budget</p>
+            <h1>Your monthly overview <span>✦</span></h1>
+            <p class="header-summary">Add your own numbers to see your financial picture.</p>
+          </div>
+          <div class="header-actions">
+            <button class="icon-button" id="notifyButton" type="button" aria-label="View spending alerts">♢</button>
+            <div class="profile-button" aria-label="Personal budget stored in this browser">
+              <span class="avatar small" aria-hidden="true">S</span>
+              <span>My budget</span>
+            </div>
+          </div>
+        </header>
+
+        <section class="overview-grid" aria-label="Monthly financial summary">
+          <article class="balance-panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow light">Remaining balance</p>
+                <h2 id="balanceAmount">Set a budget</h2>
+              </div>
+              <span class="balance-icon" aria-hidden="true">↗</span>
+            </div>
+            <div class="balance-meta">
+              <span class="positive" id="balanceStatus">Not set</span>
+              <span>after recorded expenses</span>
+            </div>
+            <div class="balance-visual" role="progressbar" aria-label="Monthly budget remaining" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span id="balanceProgress"></span>
+            </div>
+            <p class="balance-caption" id="balanceCaption">Set a monthly budget to track your balance.</p>
+          </article>
+          <article class="metric-panel">
+            <div class="metric-topline">
+              <span class="metric-icon coral" aria-hidden="true">↘</span>
+              <span class="metric-trend">Your plan</span>
+            </div>
+            <p class="eyebrow">Monthly budget</p>
+            <h2 id="budgetAmount">Not set</h2>
+            <p class="metric-note">Enter the amount you plan to spend this month.</p>
+            <button class="action-button" id="budgetButton" type="button">Set budget</button>
+          </article>
+          <article class="metric-panel savings-panel">
+            <div class="metric-topline">
+              <span class="metric-icon mint" aria-hidden="true">◆</span>
+              <span class="metric-trend positive" id="spendingStatus">Ready</span>
+            </div>
+            <p class="eyebrow">Total spent</p>
+            <h2 id="spentAmount">KSh 0.00</h2>
+            <div class="progress-track">
+              <span id="spendingProgress"></span>
+            </div>
+            <p class="metric-note" id="spendingNote">Add an expense to start tracking.</p>
+            <button class="action-button" id="expenseButton" type="button">Add expense</button>
+          </article>
+        </section>
+
+        <section class="section-heading" id="categories">
+          <div>
+            <p class="eyebrow">Spending breakdown</p>
+            <h2>Where your money goes</h2>
+          </div>
+          <button class="text-button" id="summaryButton" type="button">View summary <span>→</span></button>
+        </section>
+        <section class="category-grid" id="categoryGrid" aria-label="Spending categories"></section>
+
+        <section class="goals-section" id="goals" aria-labelledby="goalsTitle">
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow">Savings goal</p>
+              <h2 id="goalsTitle">Your savings target</h2>
+            </div>
+          </div>
+          <article class="goal-panel">
+            <div class="goal-summary">
+              <div>
+                <p class="eyebrow">Saved so far</p>
+                <h3 id="savingsAmount">KSh 0.00</h3>
+              </div>
+              <p class="goal-target">Goal: <strong id="goalAmount">Not set</strong></p>
+            </div>
+            <div class="goal-progress" role="progressbar" aria-label="Savings goal progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span id="savingsProgress"></span>
+            </div>
+            <p class="goal-note" id="savingsNote">Set a savings goal to track your progress.</p>
+            <div class="goal-actions">
+              <button class="action-button" id="goalButton" type="button">Set savings goal</button>
+              <button class="action-button secondary-action" id="addSavingsButton" type="button">Log savings</button>
+            </div>
+          </article>
+        </section>
+
+        <section class="activity-section" id="activity">
+          <div class="section-heading compact">
+            <div>
+              <p class="eyebrow">Latest activity</p>
+              <h2>Recent transactions</h2>
+            </div>
+            <button class="text-button" id="activityButton" type="button">See activity <span>→</span></button>
+          </div>
+          <div class="activity-list" id="activityList" aria-live="polite"></div>
+        </section>
+
+        <dialog class="input-dialog" id="inputDialog">
+          <form id="inputForm" method="dialog">
+            <p class="eyebrow" id="inputLabel">Monthly budget</p>
+            <h2 id="inputTitle">Set your budget</h2>
+            <div id="expenseFields" hidden>
+              <label for="descriptionInput">Description</label>
+              <input class="form-control" id="descriptionInput" name="description" type="text" maxlength="60" placeholder="e.g. Grocery shop">
+              <label for="categoryInput">Category</label>
+              <select class="form-control" id="categoryInput" name="category"></select>
+            </div>
+            <label for="amountInput">Amount (KSh)</label>
+            <input class="form-control" id="amountInput" name="amount" type="number" min="0.01" step="0.01" required>
+            <p class="dialog-error" id="inputError" role="alert"></p>
+            <div class="dialog-actions">
+              <button class="text-button" id="cancelInput" type="button">Cancel</button>
+              <button class="action-button" type="submit">Save amount</button>
+            </div>
+          </form>
+        </dialog>
+        <p class="status-message" id="statusMessage" role="status"></p>
+      </main>
+    </div>
+  </body>
+</html>
