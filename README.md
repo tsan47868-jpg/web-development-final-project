@@ -25,33 +25,29 @@ The project files have been pushed to this repository.
 
 ## Live Netlify website
 
-**Status:** Not deployed yet. Add the published Netlify URL here after deployment and testing.
+[Open the live SpendWise website](https://webdevelopmentfinalproject.netlify.app/)
 
 ## Deployment checklist
 
 - [x] Organize the static site files for deployment.
 - [x] Push the project to the public GitHub repository.
 - [x] Test the dashboard locally, including budget, expense, savings, validation, and saved data.
-- [ ] Import the GitHub repository into Netlify and publish the site.
-- [ ] Set a memorable SpendWise Netlify subdomain.
+- [x] Import the GitHub repository into Netlify and publish the site.
+- [x] Set a memorable SpendWise Netlify subdomain.
+- [x] Test the live site: styles and scripts load, mobile navigation works, and budget, expense, savings, and reload persistence work.
 - [ ] Make a visible change, push it to GitHub, and confirm Netlify deploys it automatically.
-- [ ] Test the live site and confirm its HTML, styles, scripts, navigation, and budgeting features work.
-- [ ] Add the final live Netlify URL to this README.
 - [ ] Submit the public GitHub repository link through the LMS.
 
 ## Deployment process
 
-1. In Netlify, create a new site by importing `tsan47868-jpg/web-development-final-project` from GitHub and select the `main` branch.
-2. This is a static site: use the repository root as the publish directory and leave the build command empty.
-3. Deploy the site, then choose a memorable site name in Netlify's site settings.
-4. Open the Netlify URL and test the layout, mobile navigation, adding a budget, adding an expense, setting a savings goal, validation, and persistence after reloading the same browser.
-5. Make a small visible update to the site, commit and push it to `main`, and verify that Netlify automatically completes a new deployment with the change.
-6. Test the updated published site, replace the Netlify URL placeholder above with the working URL, and submit this public GitHub repository link through the LMS.
+The public GitHub repository's `main` branch is deployed to Netlify at [webdevelopmentfinalproject.netlify.app](https://webdevelopmentfinalproject.netlify.app/). The site is static and is published from the repository root without a build command. The live page was tested for loading styles and scripts, mobile menu interaction, budget and expense entry, savings tracking, and persistence after reloading.
+
+The final continuous-deployment check is still outstanding: make a visible change, push it to `main`, and confirm Netlify publishes the new version automatically. Then submit the public GitHub repository link through the LMS.
 
 ## Deployment challenges
 
-Netlify deployment has not been completed, so deployment-specific challenges or outcomes cannot yet be reported. Record any issues encountered during the first deployment or automatic-deployment test here after resolving them.
+The initial Netlify deployment and live-site checks completed without a blocking issue. Record any challenges encountered during the pending automatic-deployment test here.
 
 ## Lessons learned
 
-The dashboard derives its totals and category breakdown from the expenses entered by the user, keeping those views consistent. Local storage preserves entries between visits in the same browser but does not synchronize between devices. The GitHub repository is ready for Netlify; the live deployment and continuous-deployment check are still outstanding.
+The dashboard derives its totals and category breakdown from the expenses entered by the user, keeping those views consistent. Local storage preserves entries between visits in the same browser but does not synchronize between devices. Netlify serves the published static site from the GitHub repository; verify the automatic deployment after future pushes.
