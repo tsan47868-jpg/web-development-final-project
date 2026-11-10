@@ -29,6 +29,110 @@ body {
   color: var(--text);
   font-family: 'DM Sans',sans-serif;
 }
+.auth-view[hidden],.app-shell[hidden] {
+  display: none;
+}
+.auth-view {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 18px;
+}
+.auth-brand {
+  margin-bottom: 24px;
+}
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  max-width: 440px;
+  padding: 30px;
+  width: 100%;
+}
+.auth-card .eyebrow {
+  margin-bottom: 10px;
+}
+.auth-card h1 {
+  font-family: 'Space Grotesk',sans-serif;
+  font-size: clamp(1.6rem,6vw,2rem);
+  letter-spacing: -.05em;
+  margin: 0;
+}
+.auth-intro {
+  color: var(--sub);
+  font-size: .88rem;
+  line-height: 1.55;
+  margin: 10px 0 18px;
+}
+.auth-notice {
+  background: var(--muted);
+  border-radius: 9px;
+  color: var(--sub);
+  font-size: .74rem;
+  line-height: 1.55;
+  padding: 12px 13px;
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  margin-top: 21px;
+}
+.auth-form label {
+  font-size: .78rem;
+  font-weight: 700;
+  margin: 0 0 7px;
+}
+.auth-form .form-control {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  margin-bottom: 16px;
+  min-height: 43px;
+  padding: 10px 11px;
+  width: 100%;
+}
+.auth-form .form-control:focus {
+  border-color: var(--brand);
+  outline: 3px solid rgba(38,59,53,.14);
+}
+.auth-confirm[hidden] {
+  display: none;
+}
+.auth-error {
+  color: #b04d3b;
+  font-size: .78rem;
+  line-height: 1.45;
+  margin: 0 0 12px;
+  min-height: 0;
+}
+.auth-error:empty {
+  display: none;
+}
+.auth-submit {
+  margin-top: 0;
+  min-height: 42px;
+}
+.auth-submit:disabled {
+  cursor: wait;
+  opacity: .7;
+}
+.auth-switch {
+  align-items: center;
+  color: var(--sub);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: .78rem;
+  gap: 5px;
+  justify-content: center;
+  margin: 18px 0 0;
+}
+.auth-switch .text-button {
+  color: var(--brand);
+}
 a {
   color: inherit;
   text-decoration: none;

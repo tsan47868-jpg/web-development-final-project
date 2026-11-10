@@ -6,14 +6,14 @@ SpendWise is a responsive personal budgeting dashboard. Enter a monthly budget, 
 
 - HTML for the dashboard structure
 - CSS for responsive styling and mobile navigation
-- JavaScript for input validation, calculations, and rendering
-- Browser local storage for saving entries on the current device
+- JavaScript and the Web Crypto API for local account sign-in, encrypted budget storage, validation, calculations, and rendering
+- Browser local storage for account records on the current device
 
 ## Run locally
 
-Open `index.html` in a modern browser. Set your own budget and savings goal, then add expenses. The dashboard starts without sample personal or financial data.
+Open the deployed site over HTTPS or run it from localhost in a modern browser that supports the Web Crypto API. Create a device-only account, then set your own budget and savings goal and add expenses. The dashboard starts without sample personal or financial data.
 
-Budget information is saved in the current browser on the current device. It is not uploaded to an account or shared with other devices. Clearing the browser's site data removes it.
+Accounts are local to the browser and device; they are not online accounts and cannot be used to sign in on another device. Budget data is encrypted in browser storage using a key derived from the account password. The password itself is not saved. There is no password reset or recovery; losing the password or clearing browser site data can make the budget unrecoverable. This client-side account is not a substitute for server-backed authentication.
 
 ## GitHub repository
 
@@ -35,6 +35,7 @@ The project files have been pushed to this repository.
 - [x] Import the GitHub repository into Netlify and publish the site.
 - [x] Set a memorable SpendWise Netlify subdomain.
 - [x] Test the live site: styles and scripts load, mobile navigation works, and budget, expense, savings, and reload persistence work.
+- [ ] Deploy and test the device-only sign-up/sign-in and encrypted budget changes.
 - [ ] Make a visible change, push it to GitHub, and confirm Netlify deploys it automatically.
 - [ ] Submit the public GitHub repository link through the LMS.
 
@@ -50,4 +51,4 @@ The initial Netlify deployment and live-site checks completed without a blocking
 
 ## Lessons learned
 
-The dashboard derives its totals and category breakdown from the expenses entered by the user, keeping those views consistent. Local storage preserves entries between visits in the same browser but does not synchronize between devices. Netlify serves the published static site from the GitHub repository; verify the automatic deployment after future pushes.
+The dashboard derives its totals and category breakdown from the expenses entered by the user, keeping those views consistent. Device-only accounts encrypt budgets in the current browser but do not synchronize between devices and do not provide password recovery. Netlify serves the published static site from the GitHub repository; verify the automatic deployment after future pushes.

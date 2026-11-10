@@ -1,4 +1,6 @@
-const storageKey = 'spendwise-personal-budget-v1';
+const legacyStorageKey = 'spendwise-personal-budget-v1';
+const accountsStorageKey = 'spendwise-device-accounts-v1';
+const keyDerivationIterations = 600000;
 const emptyData = {
   monthlyBudget: null,
   savingsGoal: null,
@@ -30,6 +32,20 @@ const statusMessage = document.querySelector('#statusMessage');
 const sidebar = document.querySelector('.sidebar');
 const menuToggle = document.querySelector('#menuToggle');
 const primaryMenu = document.querySelector('#primaryMenu');
+const authView = document.querySelector('#authView');
+const appShell = document.querySelector('#appShell');
+const authForm = document.querySelector('#authForm');
+const authEmailInput = document.querySelector('#authEmail');
+const authPasswordInput = document.querySelector('#authPassword');
+const authPasswordConfirmInput = document.querySelector('#authPasswordConfirm');
+const authConfirm = document.querySelector('#authConfirm');
+const authMessage = document.querySelector('#authMessage');
+const authSubmit = document.querySelector('#authSubmit');
+const authModeToggle = document.querySelector('#authModeToggle');
+let budgetData = structuredClone(emptyData);
+let activeAccount = null;
+let activeEncryptionKey = null;
+let authMode = 'sign-up';
 let inputMode = 'budget';
 let storageWarning = '';
 
@@ -64,26 +80,288 @@ function validateSavedData(data) {
     ));
 }
 
-function loadSavedData() {
-  try {
-    const savedData = localStorage.getItem(storageKey);
-    if (savedData === null) {
-      return structuredClone(emptyData);
-    }
+function encodeBytes(bytes) {
+  let binary = '';
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+  return btoa(binary);
+}
 
-    const parsedData = JSON.parse(savedData);
-    if (!validateSavedData(parsedData)) {
-      throw new Error('Saved budget data has an invalid format.');
-    }
-    return parsedData;
+function decodeBytes(encoded) {
+  return Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+}
+
+function createRandomBytes(length) {
+  return crypto.getRandomValues(new Uint8Array(length));
+}
+
+async function deriveEncryptionKey(password, salt) {
+  const passwordMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(password),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+  return crypto.subtle.deriveKey(
+    {
+      name: 'PBKDF2',
+      salt,
+      iterations: keyDerivationIterations,
+      hash: 'SHA-256'
+    },
+    passwordMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+}
+
+async function encryptBudgetData(data, key) {
+  const iv = createRandomBytes(12);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv },
+    key,
+    new TextEncoder().encode(JSON.stringify(data))
+  );
+  return {
+    iv: encodeBytes(iv),
+    ciphertext: encodeBytes(new Uint8Array(ciphertext))
+  };
+}
+
+async function decryptBudgetData(account, key) {
+  const plaintext = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: decodeBytes(account.iv) },
+    key,
+    decodeBytes(account.ciphertext)
+  );
+  return JSON.parse(new TextDecoder().decode(plaintext));
+}
+
+function loadAccounts() {
+  const storedAccounts = localStorage.getItem(accountsStorageKey);
+  if (storedAccounts === null) {
+    return [];
+  }
+
+  const accounts = JSON.parse(storedAccounts);
+  if (!Array.isArray(accounts) || accounts.some((account) => (
+    !account
+    || typeof account.email !== 'string'
+    || typeof account.salt !== 'string'
+    || typeof account.iv !== 'string'
+    || typeof account.ciphertext !== 'string'
+    || typeof account.legacyMigrated !== 'boolean'
+  ))) {
+    throw new Error('Saved device accounts have an invalid format.');
+  }
+  return accounts;
+}
+
+function loadLegacyBudgetData() {
+  const savedData = localStorage.getItem(legacyStorageKey);
+  if (savedData === null) {
+    return { data: structuredClone(emptyData), found: false };
+  }
+
+  const parsedData = JSON.parse(savedData);
+  if (!validateSavedData(parsedData)) {
+    throw new Error('The previous budget data could not be imported. It has been left unchanged.');
+  }
+  return { data: parsedData, found: true };
+}
+
+function removeLegacyBudgetData() {
+  try {
+    localStorage.removeItem(legacyStorageKey);
+    return true;
   } catch (error) {
-    console.error('Unable to load saved SpendWise data.', error);
-    storageWarning = ' Saved data could not be loaded; new entries will start fresh.';
-    return structuredClone(emptyData);
+    console.error('Unable to remove the previous unencrypted budget copy.', error);
+    return false;
   }
 }
 
-const budgetData = loadSavedData();
+async function saveAccountData(data = budgetData, account = activeAccount, key = activeEncryptionKey) {
+  if (!account || !key) {
+    throw new Error('Sign in before saving budget data.');
+  }
+
+  const accounts = loadAccounts();
+  const accountIndex = accounts.findIndex((savedAccount) => savedAccount.email === account.email);
+  if (accountIndex === -1) {
+    throw new Error('This device account is no longer available.');
+  }
+
+  const encrypted = await encryptBudgetData(data, key);
+  accounts[accountIndex] = { ...account, ...encrypted };
+  localStorage.setItem(accountsStorageKey, JSON.stringify(accounts));
+  activeAccount = accounts[accountIndex];
+}
+
+function showAuthView(message = '') {
+  authView.hidden = false;
+  appShell.hidden = true;
+  authMessage.textContent = message;
+  authEmailInput.value = '';
+  authPasswordInput.value = '';
+  authPasswordConfirmInput.value = '';
+  authEmailInput.focus();
+}
+
+function showAppView(email, message = `Signed in as ${email}. Your budget is saved on this device.`) {
+  authView.hidden = true;
+  appShell.hidden = false;
+  authEmailInput.value = '';
+  authPasswordInput.value = '';
+  authPasswordConfirmInput.value = '';
+  document.querySelector('#headerAccountEmail').textContent = email;
+  document.querySelector('#sidebarAccountEmail').textContent = email;
+  displayBudgetResults(message);
+}
+
+function mergeBudgetData(accountData, localData) {
+  return {
+    monthlyBudget: accountData.monthlyBudget ?? localData.monthlyBudget,
+    savingsGoal: accountData.savingsGoal ?? localData.savingsGoal,
+    savingsContributions: [...localData.savingsContributions, ...accountData.savingsContributions],
+    expenses: [...localData.expenses, ...accountData.expenses]
+  };
+}
+
+async function migrateLegacyData(account, key, accountData) {
+  if (account.legacyMigrated) {
+    return { account, data: accountData, migrated: false };
+  }
+
+  const legacyData = loadLegacyBudgetData();
+  const data = legacyData.found
+    ? mergeBudgetData(accountData, legacyData.data)
+    : accountData;
+  const updatedAccount = { ...account, legacyMigrated: true };
+  const encrypted = await encryptBudgetData(data, key);
+  updatedAccount.iv = encrypted.iv;
+  updatedAccount.ciphertext = encrypted.ciphertext;
+
+  const accounts = loadAccounts();
+  const accountIndex = accounts.findIndex((savedAccount) => savedAccount.email === account.email);
+  if (accountIndex === -1) {
+    throw new Error('This device account is no longer available.');
+  }
+  accounts[accountIndex] = updatedAccount;
+  localStorage.setItem(accountsStorageKey, JSON.stringify(accounts));
+  const legacyCopyRemoved = !legacyData.found || removeLegacyBudgetData();
+  return {
+    account: updatedAccount,
+    data,
+    migrated: legacyData.found,
+    legacyCopyRemoved
+  };
+}
+
+async function handleAuthSubmit(event) {
+  event.preventDefault();
+  authMessage.textContent = '';
+
+  if (!crypto.subtle || !crypto.getRandomValues) {
+    authMessage.textContent = 'Secure device accounts require a modern browser and a secure connection (HTTPS).';
+    return;
+  }
+
+  const email = authEmailInput.value.trim().toLowerCase();
+  const password = authPasswordInput.value;
+  const passwordConfirm = authPasswordConfirmInput.value;
+  authSubmit.disabled = true;
+  authSubmit.textContent = authMode === 'sign-up' ? 'Creating account...' : 'Signing in...';
+
+  try {
+    const accounts = loadAccounts();
+    if (authMode === 'sign-up') {
+      if (password.length < 8) {
+        throw new Error('Choose a password with at least 8 characters.');
+      }
+      if (password !== passwordConfirm) {
+        throw new Error('The passwords do not match.');
+      }
+      if (accounts.some((account) => account.email === email)) {
+        throw new Error('An account with this email already exists on this device. Sign in instead.');
+      }
+
+      const { data, found } = loadLegacyBudgetData();
+      const salt = createRandomBytes(16);
+      const key = await deriveEncryptionKey(password, salt);
+      const encrypted = await encryptBudgetData(data, key);
+      const account = {
+        email,
+        salt: encodeBytes(salt),
+        ...encrypted,
+        legacyMigrated: true
+      };
+      localStorage.setItem(accountsStorageKey, JSON.stringify([...accounts, account]));
+      const legacyCopyRemoved = !found || removeLegacyBudgetData();
+      activeAccount = account;
+      activeEncryptionKey = key;
+      budgetData = data;
+      showAppView(email);
+      if (found) {
+        statusMessage.textContent = legacyCopyRemoved
+          ? `Account created for ${email}. Your existing browser budget was moved into this account.`
+          : `Account created for ${email} and your budget was encrypted, but the old browser copy could not be removed.`;
+      }
+    } else {
+      const account = accounts.find((savedAccount) => savedAccount.email === email);
+      if (!account) {
+        throw new Error('No account for this email was found on this device.');
+      }
+
+      const key = await deriveEncryptionKey(password, decodeBytes(account.salt));
+      const data = await decryptBudgetData(account, key);
+      if (!validateSavedData(data)) {
+        throw new Error('Saved account data is invalid and could not be opened.');
+      }
+
+      const migrated = await migrateLegacyData(account, key, data);
+      activeAccount = migrated.account;
+      activeEncryptionKey = key;
+      budgetData = migrated.data;
+      showAppView(email, migrated.migrated && migrated.legacyCopyRemoved
+        ? `Signed in as ${email}. Your existing browser budget was moved into this account.`
+        : migrated.migrated
+          ? `Signed in as ${email}, but the old browser copy could not be removed.`
+          : `Signed in as ${email}. Your budget is saved on this device.`);
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'OperationError') {
+      authMessage.textContent = 'Email or password is incorrect.';
+    } else {
+      console.error('Unable to open the SpendWise device account.', error);
+      authMessage.textContent = error.message || 'The account could not be opened. Check available browser storage and try again.';
+    }
+  } finally {
+    authSubmit.disabled = false;
+    authSubmit.textContent = authMode === 'sign-up' ? 'Create account' : 'Sign in';
+  }
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const isSignUp = mode === 'sign-up';
+  document.querySelector('#authTitle').textContent = isSignUp ? 'Your budget, your account' : 'Welcome back';
+  document.querySelector('.auth-intro').textContent = isSignUp
+    ? 'Create an account to keep your budget separate in this browser.'
+    : 'Sign in to unlock your budget on this device.';
+  authConfirm.hidden = !isSignUp;
+  authPasswordConfirmInput.required = isSignUp;
+  authPasswordInput.autocomplete = isSignUp ? 'new-password' : 'current-password';
+  authPasswordConfirmInput.autocomplete = 'new-password';
+  authSubmit.textContent = isSignUp ? 'Create account' : 'Sign in';
+  document.querySelector('#authSwitchPrompt').textContent = isSignUp
+    ? 'Already have an account?'
+    : 'New to SpendWise on this device?';
+  authModeToggle.textContent = isSignUp ? 'Sign in' : 'Create account';
+  authMessage.textContent = '';
+}
 
 function formatCurrency(value) {
   return currencyFormatter.format(value).replace('Ksh', 'KSh');
@@ -232,15 +510,15 @@ function displayBudgetResults(message = '') {
 }
 
 function saveData(message) {
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(budgetData));
-  } catch (error) {
+  const savedData = structuredClone(budgetData);
+  return saveAccountData(savedData).then(() => {
+    displayBudgetResults(message);
+    return true;
+  }).catch((error) => {
     console.error('Unable to save SpendWise data in this browser.', error);
     statusMessage.textContent = `${message} Changes could not be saved in this browser.`;
     return false;
-  }
-  displayBudgetResults(message);
-  return true;
+  });
 }
 
 function openInputDialog(mode) {
@@ -303,6 +581,23 @@ window.matchMedia('(min-width: 768px)').addEventListener('change', (event) => {
   }
 });
 
+authForm.addEventListener('submit', handleAuthSubmit);
+authModeToggle.addEventListener('click', () => {
+  setAuthMode(authMode === 'sign-up' ? 'sign-in' : 'sign-up');
+});
+document.querySelector('#signOutButton').addEventListener('click', () => {
+  if (inputDialog.open) {
+    inputDialog.close();
+  }
+  activeAccount = null;
+  activeEncryptionKey = null;
+  budgetData = structuredClone(emptyData);
+  displayBudgetResults();
+  statusMessage.textContent = '';
+  setAuthMode('sign-in');
+  showAuthView('You have signed out. Your encrypted budget remains on this device.');
+});
+
 document.querySelector('#budgetButton').addEventListener('click', () => openInputDialog('budget'));
 document.querySelector('#expenseButton').addEventListener('click', () => openInputDialog('expense'));
 document.querySelector('#goalButton').addEventListener('click', () => openInputDialog('goal'));
@@ -361,4 +656,12 @@ inputForm.addEventListener('submit', (event) => {
   saveData(message);
 });
 
-displayBudgetResults('Add your budget, expenses, and savings goal to get started.');
+try {
+  const accounts = loadAccounts();
+  setAuthMode(accounts.length > 0 ? 'sign-in' : 'sign-up');
+  showAuthView();
+} catch (error) {
+  console.error('Unable to read SpendWise device accounts.', error);
+  setAuthMode('sign-in');
+  showAuthView('Saved account information could not be read. Do not clear browser data if you need to recover it.');
+}

@@ -13,7 +13,62 @@
     <script src="script.js" defer></script>
   </head>
   <body>
-    <div class="app-shell">
+    <main class="auth-view" id="authView" aria-labelledby="authTitle">
+      <a class="brand auth-brand" href="#overview" aria-label="SpendWise home">
+        <span class="brand-mark">S</span>
+        <span>SpendWise</span>
+      </a>
+      <section class="auth-card">
+        <p class="eyebrow">Private on this device</p>
+        <h1 id="authTitle">Your budget, your account</h1>
+        <p class="auth-intro">Create an account to keep your budget separate in this browser.</p>
+        <div class="auth-notice">
+          This is a device-only account, not an online account. Your data will not sync to other devices, and a forgotten password cannot be reset.
+        </div>
+        <form class="auth-form" id="authForm">
+          <label for="authEmail">Email</label>
+          <input
+            class="form-control"
+            id="authEmail"
+            name="email"
+            type="email"
+            autocomplete="username"
+            maxlength="254"
+            required
+          >
+          <label for="authPassword">Password</label>
+          <input
+            class="form-control"
+            id="authPassword"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            minlength="8"
+            required
+          >
+          <div class="auth-confirm" id="authConfirm">
+            <label for="authPasswordConfirm">Confirm password</label>
+            <input
+              class="form-control"
+              id="authPasswordConfirm"
+              name="passwordConfirm"
+              type="password"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            >
+          </div>
+          <p class="auth-error" id="authMessage" role="alert" aria-live="polite"></p>
+          <button class="action-button auth-submit" id="authSubmit" type="submit">Create account</button>
+        </form>
+        <p class="auth-switch">
+          <span id="authSwitchPrompt">Already have an account?</span>
+          <button class="text-button" id="authModeToggle" type="button">Sign in</button>
+        </p>
+      </section>
+    </main>
+
+    <div class="app-shell" id="appShell" hidden>
       <aside class="sidebar" aria-label="Primary navigation">
         <div class="sidebar-header">
           <a class="brand" href="#overview">
@@ -50,7 +105,7 @@
           <div class="user-profile">
             <span class="avatar" aria-hidden="true">S</span>
             <span class="user-copy">
-              <strong>Personal budget</strong>
+              <strong id="sidebarAccountEmail">Your account</strong>
               <small>Saved on this device</small>
             </span>
           </div>
@@ -66,10 +121,11 @@
           </div>
           <div class="header-actions">
             <button class="icon-button" id="notifyButton" type="button" aria-label="View spending alerts">♢</button>
-            <div class="profile-button" aria-label="Personal budget stored in this browser">
+            <div class="profile-button account-profile" aria-label="Signed in account">
               <span class="avatar small" aria-hidden="true">S</span>
-              <span>My budget</span>
+              <span id="headerAccountEmail">My budget</span>
             </div>
+            <button class="text-button sign-out-button" id="signOutButton" type="button">Sign out</button>
           </div>
         </header>
 
